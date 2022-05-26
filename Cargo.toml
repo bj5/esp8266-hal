@@ -9,7 +9,7 @@ repository = "https://github.com/esp-rs/esp8266-hal"
 
 [dependencies]
 embedded-hal = { version = "0.2", features = ["unproven"] }
-esp8266 = "0.5"
+esp8266 = "0.6"
 nb = "1.0"
 paste = { version = "1.0", optional = true }
 void = { version = "1.0", default-features = false }
