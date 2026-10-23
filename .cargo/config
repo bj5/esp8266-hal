@@ -8,5 +8,13 @@ rustflags = [
 ]
 target = "xtensa-esp8266-none-elf"
 
+# The esp toolchain's target spec expects `xtensa-lx106-elf-gcc`, but the bundled
+# Espressif Xtensa GCC (which dropped ESP8266-specific wrappers) only provides
+# xtensa-esp32(-s2/s3)-elf and a big-endian generic driver. The esp32 wrapper is a
+# little-endian link driver that works fine for LX106 objects (ld doesn't care about
+# the core config; all code was already assembled by rustc/LLVM).
+[target.xtensa-esp8266-none-elf]
+linker = "xtensa-esp32-elf-gcc"
+
 [unstable]
 build-std = ["core"]

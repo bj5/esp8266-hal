@@ -12,12 +12,15 @@ categories = ["embedded", "hardware-support", "no-std"]
 
 [dependencies]
 embedded-hal = { version = "0.2", features = ["unproven"] }
-esp8266      = { version = "0.6", path = "./esp8266" }
+# NOTE: the vendored PAC in ./esp8266 (v0.7) was generated with a newer svd2rust that makes
+# RegisterBlock fields private; this HAL is written against the published esp8266 0.6 API
+# (public register fields), so we depend on the crates.io version instead of the path crate.
+esp8266      = { version = "0.6" }
 nb           = "1.0"
 paste        = { version = "1.0", optional = true }
 void         = { version = "1.0", default-features = false }
 xtensa-lx    = { version = "0.7", features = ["esp8266"] }
-xtensa-lx-rt = { version = "0.12", features = ["esp8266"], optional = true }
+xtensa-lx-rt = { version = "0.16", features = ["esp8266"], optional = true }
 
 [dependencies.esp8266-hal-proc-macros]
 path    = "procmacros"
@@ -34,6 +37,13 @@ rt        = ["xtensa-lx-rt"]
 # Place program completely in RAM (needed when e.g. using only ROM bootloader,
 # or for debugging).
 all_in_ram = []
+
+# xtensa-lx-rt 0.16 on crates.io uses `asm!` inside `#[naked]` functions, which is a hard
+# error (E0787) on recent rustc nightlies (the esp toolchain). The vendored copy in
+# vendor/xtensa-lx-rt converts those to `core::arch::naked_asm!` and uses the stabilized
+# `#[unsafe(naked)]` attribute; everything else is unchanged.
+[patch.crates-io]
+xtensa-lx-rt = { path = "vendor/xtensa-lx-rt" }
 
 [profile.dev]
 lto       = true
