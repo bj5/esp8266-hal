@@ -11,6 +11,9 @@ pub use xtensa_lx_rt::{entry, exception};
 #[macro_use]
 pub mod interrupt;
 
+#[cfg(all(feature = "rt", feature = "interrupt"))]
+pub mod wifi;
+
 pub mod efuse;
 pub mod flash;
 pub mod gpio;

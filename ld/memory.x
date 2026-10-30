@@ -73,6 +73,7 @@ _stack_end_cpu0 = _stack_start_cpu0 + STACK_SIZE;
 EXTERN(DefaultHandler);
 
 /* interrupt handlers */
+PROVIDE(__fiq_interrupt = __default_interrupt);
 PROVIDE(__slc_interrupt = __default_interrupt);
 PROVIDE(__spi_interrupt = __default_interrupt);
 PROVIDE(__gpio_interrupt = __default_interrupt);
@@ -82,6 +83,7 @@ PROVIDE(__soft_interrupt = __default_interrupt);
 PROVIDE(__wdt_interrupt = __default_interrupt);
 PROVIDE(__timer1_interrupt = __default_interrupt);
 
+PROVIDE(__fiq_hal_interrupt = __default_interrupt);
 PROVIDE(__slc_hal_interrupt = __default_interrupt);
 PROVIDE(__spi_hal_interrupt = __default_interrupt);
 PROVIDE(__gpio_hal_interrupt = __default_interrupt);
@@ -90,3 +92,44 @@ PROVIDE(__ccompare_hal_interrupt = __default_interrupt);
 PROVIDE(__soft_hal_interrupt = __default_interrupt);
 PROVIDE(__wdt_hal_interrupt = __default_interrupt);
 PROVIDE(__timer1_hal_interrupt = __default_interrupt);
+
+/*
+ * ESP8266 ROM entry points used by the WiFi module.
+ *
+ * Addresses are the documented ROM API from the SDK linker script
+ * `ld/eagle.rom.addr.v6.ld`; they are the only closed-source code `src/wifi` calls.
+ * `src/wifi/rom.rs` declares them as `extern "C"`, so these PROVIDEs resolve them without
+ * linking any object from the SDK's `.a` archives.
+ */
+PROVIDE(phy_get_romfuncs = 0x40006b08);
+PROVIDE(rom_get_bb_atten = 0x40006238);
+PROVIDE(rom_get_noisefloor = 0x40006394);
+PROVIDE(rom_start_noisefloor = 0x40006874);
+PROVIDE(rom_linear_to_db = 0x40006484);
+PROVIDE(rom_mhz2ieee = 0x400065a4);
+PROVIDE(rom_phy_reset_req = 0x40007804);
+PROVIDE(rom_rfpll_reset = 0x40007868);
+PROVIDE(rom_rfpll_set_freq = 0x40007968);
+PROVIDE(rom_write_rfpll_sdm = 0x400078dc);
+PROVIDE(rom_restart_cal = 0x4000781c);
+PROVIDE(rom_i2c_readReg = 0x40007268);
+PROVIDE(rom_i2c_readReg_Mask = 0x4000729c);
+PROVIDE(rom_i2c_writeReg = 0x400072d8);
+PROVIDE(rom_i2c_writeReg_Mask = 0x4000730c);
+PROVIDE(rom_chip_v5_rx_init = 0x4000711c);
+PROVIDE(rom_chip_v5_tx_init = 0x4000718c);
+PROVIDE(rom_sar_init = 0x40006738);
+PROVIDE(ets_delay_us = 0x40002ecc);
+PROVIDE(ets_update_cpu_frequency = 0x40002f04);
+PROVIDE(rom_set_rxclk_en = 0x40006550);
+PROVIDE(rom_set_txclk_en = 0x4000650c);
+PROVIDE(rom_ana_inf_gating_en = 0x40006b10);
+PROVIDE(rom_pbus_debugmode = 0x4000737c);
+PROVIDE(rom_pbus_force_test = 0x4000747c);
+PROVIDE(rom_pbus_rd = 0x400074d8);
+PROVIDE(rom_pbus_dco___SA2 = 0x40007bf0);
+PROVIDE(rom_pbus_workmode = 0x40007648);
+PROVIDE(rom_pbus_xpd_rx_on = 0x400076cc);
+PROVIDE(rom_pbus_xpd_tx_off = 0x400076fc);
+PROVIDE(ets_intr_lock = 0x40000f74);
+PROVIDE(ets_intr_unlock = 0x40000f80);
