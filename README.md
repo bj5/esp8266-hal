@@ -24,6 +24,7 @@ An example project using this crate can be found [here](https://github.com/icewi
 - **Watchdog**: Hardware and software watchdog feeding and management.
 - **EFuse**: Read factory MAC address and chip identification.
 - **Runtime (`rt`) & Interrupts**: System reset entry (`ESP8266Reset`), vector table setup via `xtensa-lx-rt`, and `#[interrupt]` handlers.
+- **WiFi (raw frames)**: Pure-Rust `no_std` port of the raw-frame subset of the closed-source `ESP8266_NONOS_SDK` - PHY bring-up through the ROM function table, RX link descriptors, the `wDev_Initialize` MAC bring-up, the FIQ RX handler, single-descriptor TX, and scan/station state machines. Derived from decompilation of the SDK archives; the evidence table is in [`docs/wifi.md`](docs/wifi.md) (written in 简体中文). No SDK object code is linked.
 
 ---
 
@@ -89,6 +90,19 @@ $ espflash flash -p /dev/ttyUSB0 target/xtensa-esp8266-none-elf/release/examples
 
 The chip architecture is auto-detected over the serial connection, so no `--chip` flag is required.
 
+If you flash with `esptool` instead, use `--flash-mode dio`:
+
+```shell
+$ esptool --chip esp8266 elf2image -o wifi_scan.bin target/xtensa-esp8266-none-elf/release/examples/wifi_scan
+$ esptool -p /dev/ttyUSB0 -c esp8266 write-flash --flash-mode dio --flash-size 4MB --flash-freq 40m \
+    0x0 wifi_scan.bin0x00000.bin 0x10000 wifi_scan.bin0x10000.bin
+```
+
+On the board used for the WiFi port the QIO data-read path returns zeros, so `dio` is required for the
+flash contents (including the init-data blob the ROM PHY entries read from sector 0 offset `0x78`) to be
+visible. A build error silently flashes the stale ELF, so confirm `cargo build` printed `Finished` before
+`elf2image`.
+
 ### Serial Monitoring & Baud Rates
 
 To view serial output from the board:
@@ -114,6 +128,8 @@ $ espflash monitor -p /dev/ttyUSB0 -b 115200
 | [`uart_interrupt`](examples/uart_interrupt.rs) | Demonstrates interrupt-driven serial receive with an attached interrupt callback and `#[interrupt(uart)]` handler, toggling the LED on activity. |
 | [`flash`](examples/flash.rs) | Reads, increments, erases, and writes an 8-byte reboot counter in SPI Flash sector `0x7E000`. |
 | [`diag`](examples/diag.rs) | Step-by-step diagnostic test printing status over UART0 after each phase (UART init, GPIO2 high, timer creation, FRC1 register check, delay test, LED toggle). |
+| [`wifi_scan`](examples/wifi_scan.rs) | Raw-frame WiFi demo: walks channels 1..14, prints every management frame the FIQ RX path delivers, then associates with the first network reporting an SSID. Reports no frames on the board this port was developed on: with a 2.4 GHz transmitter in range the MAC never fetches a descriptor, so the RX gap is the demodulator's calibration half rather than the port's wiring (see [`docs/wifi.md`](docs/wifi.md)). |
+| [`wifi_rom_probe`](examples/wifi_rom_probe.rs) | Dumps the 68-entry ROM PHY function table and calls each slot with no arguments, recording in RTC memory which entry does not return. Source of the hardware verdicts in `docs/wifi.md`. |
 
 ---
 

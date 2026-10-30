@@ -5,6 +5,10 @@ use crate::ram;
 
 #[repr(u8)]
 pub enum InterruptType {
+    /// Fast interrupt source 0: the WiFi MAC. The official SDK attaches `wDev_ProcessFiq` to
+    /// it with `ets_isr_attach(0, &wDev_ProcessFiq)` + `ets_isr_unmask(1)`
+    /// (`app_main.o`, `FUN_00010b00 @0x00010b00`).
+    FIQ = 0,
     SLC = 1,
     SPI = 2,
     GPIO = 4,
@@ -23,6 +27,7 @@ impl InterruptType {
 
 extern "Rust" {
     // interrupt handlers set by #[interrupt] macro
+    fn __fiq_interrupt(context: &Context);
     fn __slc_interrupt(context: &Context);
     fn __spi_interrupt(context: &Context);
     fn __gpio_interrupt(context: &Context);
@@ -33,6 +38,7 @@ extern "Rust" {
     fn __timer1_interrupt(context: &Context);
 
     // interrupt handlers for the hal to use
+    fn __fiq_hal_interrupt(context: &Context);
     fn __slc_hal_interrupt(context: &Context);
     fn __spi_hal_interrupt(context: &Context);
     fn __gpio_hal_interrupt(context: &Context);
@@ -52,6 +58,10 @@ fn interrupt_trampoline(level: u32, frame: Context) {
         xtensa_lx::interrupt::clear(mask);
     }
     unsafe {
+        if InterruptType::FIQ.mask() & mask > 0 {
+            __fiq_interrupt(&frame);
+            __fiq_hal_interrupt(&frame);
+        };
         if InterruptType::SLC.mask() & mask > 0 {
             __slc_interrupt(&frame);
             __slc_hal_interrupt(&frame);
